@@ -1,0 +1,33 @@
+{
+  "name": "backprev",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "imap": "^0.8.17",
+    "jsonwebtoken": "^9.0.2",
+    "mailparser": "^3.7.3",
+    "mongodb": "^6.16.0",
+    "mongoose": "^8.14.0",
+    "nodemailer": "^7.0.3",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "twilio": "^5.7.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
