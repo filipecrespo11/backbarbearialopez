@@ -40,4 +40,9 @@ rotas.get('/usuarios', async (req, res) => {
         res.status(500).json({ message: 'Erro ao consultar usuários', error });
     }
 });
-    module.exports = rotas;
+
+const agendaController = require('../controllers/agendaController');
+// Rota para criar agendamento (usuário precisa estar autenticado)
+rotas.post('/agendar', agendaController.criarAgendamento);
+
+module.exports = rotas;
