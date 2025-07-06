@@ -7,7 +7,7 @@ const {login} = require('../controllers/autecontrol');
 rotas.post('/login', login);
 
 const cadastroController = require('../controllers/cadastroController');
-// Rota para iniciar cadastro (envia SMS)
+// Rota para iniciar cadastro (envia email)
 rotas.post('/iniciar-cadastro', cadastroController.iniciarCadastro);
 // Rota para verificar código e finalizar cadastro
 rotas.post('/verificar-codigo', cadastroController.verificarCodigo);
