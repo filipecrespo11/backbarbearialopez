@@ -4,7 +4,12 @@
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
+    "start": "NODE_ENV=production node server.js",
     "server": "node server.js",
+    "pm2:start": "pm2 start server.js --name barbearia-backend",
+    "pm2:stop": "pm2 stop barbearia-backend",
+    "pm2:restart": "pm2 restart barbearia-backend",
+    "pm2:delete": "pm2 delete barbearia-backend",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -1,4 +1,12 @@
 require('dotenv').config();
+
+// Debug: verificar variáveis de ambiente
+console.log("=== DEBUG VARIÁVEIS DE AMBIENTE ===");
+console.log("MONGO_URI:", process.env.MONGO_URI ? "✅ Definida" : "❌ Não definida");
+console.log("PORT:", process.env.PORT || "3001");
+console.log("NODE_ENV:", process.env.NODE_ENV || "development");
+console.log("=====================================");
+
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session'); 
