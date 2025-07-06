@@ -8,6 +8,7 @@ const usuariosSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true }, // email agora é obrigatório
   googleId: { type: String, sparse: true, unique: true },
   foto:{ type: String, unique: true, sparse: true },
+  verificado: { type: Boolean, default: false }, // campo para verificação de email
 });
 
 module.exports = mongoose.model("usuarios", usuariosSchema);

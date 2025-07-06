@@ -11,7 +11,7 @@ const Usuario = require('./models/usuarios');
 const app = express();
 
 // Configuração da sessão (necessária para login com Passport)
-app.use(session({ secret: 'seuSegredo', resave: false, saveUninitialized: true }));
+app.use(session({ secret: process.env.JWT_SECRET , resave: false, saveUninitialized: true }));
 
 // Inicialização do passport
 app.use(passport.initialize());

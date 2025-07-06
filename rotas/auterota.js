@@ -11,6 +11,8 @@ const cadastroController = require('../controllers/cadastroController');
 rotas.post('/iniciar-cadastro', cadastroController.iniciarCadastro);
 // Rota para verificar código e finalizar cadastro
 rotas.post('/verificar-codigo', cadastroController.verificarCodigo);
+// Rota para callback do Google OAuth
+rotas.post('/auth/google/callback', cadastroController.googleCallback);
 
 // Rota para criar um novo usuário
 rotas.post('/criausuarios', async (req, res) => {
@@ -44,5 +46,12 @@ rotas.get('/usuarios', async (req, res) => {
 const agendaController = require('../controllers/agendaController');
 // Rota para criar agendamento (usuário precisa estar autenticado)
 rotas.post('/agendar', agendaController.criarAgendamento);
+
+// Rota para obter configurações do Google OAuth
+rotas.get('/google-config', (req, res) => {
+  res.json({
+    clientId: process.env.GOOGLE_CLIENT_ID
+  });
+});
 
 module.exports = rotas;

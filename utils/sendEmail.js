@@ -1,29 +1,60 @@
-// Utilitário para envio de email usando Nodemailer
 const nodemailer = require('nodemailer');
 
 // Configuração do transportador de email
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // ou outro provedor
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // true para porta 465
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
-async function sendEmail(to, code) {
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: to,
-    subject: 'Código de Confirmação - Barbearia Lopez',
-    html: `
-      <h2>Código de Confirmação</h2>
-      <p>Seu código de confirmação é: <strong>${code}</strong></p>
-      <p>Este código expira em 10 minutos.</p>
-      <p>Se você não solicitou este código, ignore este email.</p>
-    `
-  };
+async function sendEmail(to, subject, html) {
+  // Verificar se está em desenvolvimento
+  if (process.env.NODE_ENV === 'development') {
+    console.log('📧 Email simulado em desenvolvimento:');
+    console.log('Para:', to);
+    console.log('Assunto:', subject);
+    console.log('Conteúdo:', html);
+    
+    // Tentar enviar email real mesmo em desenvolvimento
+    try {
+      const info = await transporter.sendMail({
+        from: `"Barbearia Lopez" <${process.env.EMAIL_FROM}>`,
+        to,
+        subject,
+        html
+      });
+      
+      console.log('✅ Email enviado com sucesso:', info.messageId);
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error('❌ Erro ao enviar email:', error.message);
+      // Em desenvolvimento, continuar mesmo se falhar
+      return { success: true, message: 'Email simulado (falha no envio real)' };
+    }
+  }
 
-  return transporter.sendMail(mailOptions);
+  // Para produção, tentar enviar email real
+  try {
+    const info = await transporter.sendMail({
+      from: `"Barbearia Lopez" <${process.env.EMAIL_FROM}>`,
+      to,
+      subject,
+      html
+    });
+    
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Erro ao enviar email:', error);
+    return { success: false, error: error.message };
+  }
 }
 
-module.exports = sendEmail;
+// Exportação correta
+module.exports = { sendEmail };
