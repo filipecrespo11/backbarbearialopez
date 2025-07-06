@@ -18,8 +18,24 @@ const bd = require('./config/bd');
 const Usuario = require('./models/usuarios');
 const app = express();
 
-// Configuração da sessão (necessária para login com Passport)
-app.use(session({ secret: process.env.JWT_SECRET , resave: false, saveUninitialized: true }));
+// Configuração da sessão
+const sessionConfig = {
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only em produção
+    maxAge: 24 * 60 * 60 * 1000 // 24 horas
+  }
+};
+
+// Em produção, adicionar configurações adicionais
+if (process.env.NODE_ENV === 'production') {
+  sessionConfig.cookie.secure = true; // Require HTTPS
+  sessionConfig.name = 'sessionId'; // Nome personalizado do cookie
+}
+
+app.use(session(sessionConfig));
 
 // Inicialização do passport
 app.use(passport.initialize());

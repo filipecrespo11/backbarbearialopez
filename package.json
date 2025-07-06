@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
     "start": "NODE_ENV=production node server.js",
     "server": "node server.js",
     "pm2:start": "pm2 start server.js --name barbearia-backend",
