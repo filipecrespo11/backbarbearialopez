@@ -85,7 +85,7 @@ app.use('/auterota', auterota);
 
      
 
-const PORT = process.env.PORT || 3000; // Porta padrão ou porta definida no ambiente
+const PORT = process.env.PORT || 3001; // Porta padrão ou porta definida no ambiente
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });

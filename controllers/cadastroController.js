@@ -72,12 +72,24 @@ const iniciarCadastro = async (req, res) => {
       }
     } catch (emailError) {
       console.error('Erro ao enviar email:', emailError);
-      // Em caso de erro no email, retornar código para desenvolvimento
+      
+      // Em caso de erro no email, sempre retornar código para desenvolvimento/fallback
       console.log(`🔐 Código de verificação para ${email}: ${verificationCode}`);
+      
+      // Verificar se é erro de autenticação do Gmail
+      if (emailError.code === 'EAUTH') {
+        console.log('⚠️  Erro de autenticação Gmail. Verifique as configurações de email.');
+        console.log('📧 Para corrigir:');
+        console.log('   1. Ative a autenticação de 2 fatores no Gmail');
+        console.log('   2. Gere uma "Senha de App" em https://myaccount.google.com/apppasswords');
+        console.log('   3. Use a senha de app no EMAIL_PASS');
+      }
+      
       res.status(200).json({ 
-        message: 'Erro ao enviar email. Código de verificação:',
-        codigo_dev: verificationCode, // Fallback em caso de erro
-        email
+        message: 'Sistema funcionando em modo de desenvolvimento. Use o código mostrado no console do servidor.',
+        codigo_dev: verificationCode, // Sempre retornar em caso de erro
+        email,
+        debug: process.env.NODE_ENV === 'development' ? 'Email desabilitado para desenvolvimento' : 'Email temporariamente indisponível'
       });
     }
   } catch (error) {
