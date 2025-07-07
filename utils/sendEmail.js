@@ -10,7 +10,7 @@ let transporter = null;
 
 if (emailConfigured) {
   // Configuração do transportador de email
-  transporter = nodemailer.createTransporter({
+  transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true, // true para porta 465
