@@ -1,15 +1,22 @@
 const usuarios = require("../models/usuarios");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const login = async (req, res) => {
   const { email, username, password } = req.body;
 
   try {
-    // Permite login por email ou username
-    const query = email ? { email, password } : { username, password };
+    // Permite login por email ou username (sem incluir senha na query)
+    const query = email ? { email } : { username };
     const usuario = await usuarios.findOne(query);
     
     if (!usuario) {
+      return res.status(401).json({ message: "Usuário ou senha inválidos" });
+    }
+
+    // Verifica senha usando bcrypt
+    const senhaCorreta = await bcrypt.compare(password, usuario.password);
+    if (!senhaCorreta) {
       return res.status(401).json({ message: "Usuário ou senha inválidos" });
     }
     
