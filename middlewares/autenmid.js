@@ -1,12 +1,43 @@
-const express = require('express');
-const jwr = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
+const authenticateToken = (req, res, next) => {
+  // Verificar múltiplos formatos de token
+  const authHeader = req.headers['authorization'];
+  const xAccessToken = req.headers['x-access-token'];
+  
+  let token = null;
+  
+  // Tentar pegar token do header Authorization (Bearer format)
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  }
+  // Fallback para x-access-token header
+  else if (xAccessToken) {
+    token = xAccessToken;
+  }
+  
+  if (!token) {
+    return res.status(401).json({ 
+      success: false,
+      message: 'Token de acesso requerido' 
+    });
+  }
 
-const protect = (req, res, next) => { let token = req.headers.authorization;
-     if (!token) { return res.status(401).json({ message: 'Token não fornecido' });
-     } token = token.split(' ')[1]; jwr.verify(token, process.env.JWT_SECRET,
-         (err, decoded) => { if (err) { return res.status(401).json({ message: 'Token inválido' });
-         } req.user = decoded; next(); });
-        
-         };
-module.exports = { protect };
+  try {
+    // Verificar e decodificar o token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.error('Erro na verificação do token:', error);
+    return res.status(401).json({ 
+      success: false,
+      message: 'Token inválido ou expirado' 
+    });
+  }
+};
+
+// Manter compatibilidade com o nome antigo
+const protect = authenticateToken;
+
+module.exports = { authenticateToken, protect };

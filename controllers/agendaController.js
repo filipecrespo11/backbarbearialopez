@@ -3,7 +3,7 @@ const Agenda = require('../models/agenda');
 
 // Cria um novo agendamento
 async function criarAgendamento(req, res) {
-  // Supondo que req.user contém o usuário logado (via sessão/passport)
+  // O usuário vem do middleware de autenticação (req.user)
   const usuario = req.user;
   if (!usuario) return res.status(401).json({ error: 'Usuário não autenticado.' });
 
@@ -13,14 +13,20 @@ async function criarAgendamento(req, res) {
   }
 
   try {
+    // Buscar dados completos do usuário no banco
+    const usuarioCompleto = await require('../models/usuarios').findById(usuario.id || usuario.userId);
+    if (!usuarioCompleto) {
+      return res.status(401).json({ error: 'Usuário não encontrado.' });
+    }
+
     // Tenta criar o agendamento
     const novoAgendamento = await Agenda.create({
-      nome: usuario.nome_completo || usuario.nome, // compatível com Google/local
-      telefone: usuario.tel,
+      nome: usuarioCompleto.nome_completo,
+      telefone: usuarioCompleto.tel,
       data,
       horario,
       servico,
-      usuarioId: usuario._id // Adiciona referência ao usuário
+      usuarioId: usuarioCompleto._id
     });
     res.status(201).json({ message: 'Agendamento criado com sucesso!', agendamento: novoAgendamento });
   } catch (err) {

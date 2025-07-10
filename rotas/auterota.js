@@ -1,5 +1,6 @@
 const express = require('express');
 const usuarios = require('../models/usuarios');
+const { authenticateToken } = require('../middlewares/autenmid');
 
 const rotas = express.Router();
 
@@ -45,7 +46,7 @@ rotas.get('/usuarios', async (req, res) => {
 
 const agendaController = require('../controllers/agendaController');
 // Rota para criar agendamento (usuário precisa estar autenticado)
-rotas.post('/agendar', agendaController.criarAgendamento);
+rotas.post('/agendar', authenticateToken, agendaController.criarAgendamento);
 
 // Rota para obter configurações do Google OAuth
 rotas.get('/google-config', (req, res) => {
