@@ -7,7 +7,9 @@ const usuariosSchema = new mongoose.Schema({
   tel: { type: String }, // telefone não é mais obrigatório
   email: { type: String, required: true, unique: true }, // email agora é obrigatório
   googleId: { type: String, sparse: true, unique: true },
-  foto:{ type: String, unique: true, sparse: true },
+  google_id: { type: String, sparse: true, unique: true }, // compatibilidade
+  foto: { type: String, sparse: true },
+  avatar_url: { type: String, sparse: true }, // para URL do avatar do Google
   verificado: { type: Boolean, default: false }, // campo para verificação de email
 });
 

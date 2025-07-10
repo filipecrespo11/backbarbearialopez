@@ -2,6 +2,9 @@ const usuarios = require('../models/usuarios');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../utils/sendEmail'); // Importação correta
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Função para gerar código de verificação
 const generateVerificationCode = () => {
@@ -161,7 +164,9 @@ const verificarCodigo = async (req, res) => {
 
 const googleCallback = async (req, res) => {
   try {
-    const { code, state } = req.body;
+    const { code, state, redirect_uri } = req.body;
+    
+    console.log('🔵 Google callback recebido:', { code: code?.substring(0, 20) + '...', state });
     
     if (!code) {
       return res.status(400).json({ 
@@ -169,38 +174,97 @@ const googleCallback = async (req, res) => {
         message: 'Código de autorização não encontrado' 
       });
     }
+
+    if (!redirect_uri) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'redirect_uri é obrigatório' 
+      });
+    }
     
-    // TODO: Implementar troca do código por token do Google
-    // const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    //   body: new URLSearchParams({
-    //     code,
-    //     client_id: process.env.GOOGLE_CLIENT_ID,
-    //     client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    //     redirect_uri: 'http://localhost:3000/auth/google/callback',
-    //     grant_type: 'authorization_code'
-    //   })
-    // });
-    
-    // TODO: Buscar dados do usuário no Google
-    // const userData = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-    //   headers: { Authorization: `Bearer ${accessToken}` }
-    // });
-    
-    // TODO: Criar/atualizar usuário no banco
-    // TODO: Gerar JWT token
-    
-    // Por enquanto, retornar erro informativo
-    res.status(501).json({ 
-      success: false, 
-      message: 'Google OAuth ainda não está totalmente implementado. Use o cadastro tradicional por enquanto.' 
+    // Trocar código por token - usa o redirect_uri fornecido pelo cliente
+    const { tokens } = await client.getToken({
+      code: code,
+      redirect_uri: redirect_uri // Flexível - vem do frontend
     });
+    
+    // Verificar o token ID
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    
+    const payload = ticket.getPayload();
+    console.log('🔵 Dados do Google:', payload);
+    
+    // Verificar se usuário já existe
+    let usuario = await usuarios.findOne({ 
+      $or: [
+        { email: payload.email },
+        { google_id: payload.sub },
+        { googleId: payload.sub }
+      ]
+    });
+    
+    if (!usuario) {
+      // Criar novo usuário
+      usuario = new usuarios({
+        nome_completo: payload.name,
+        username: payload.email,
+        email: payload.email,
+        password: await bcrypt.hash('google_oauth_' + payload.sub, 10), // Senha segura para OAuth
+        tel: '', // Vazio por enquanto
+        google_id: payload.sub,
+        googleId: payload.sub, // compatibilidade
+        avatar_url: payload.picture,
+        foto: payload.picture,
+        verificado: true // Google já verificou o email
+      });
+      
+      await usuario.save();
+      console.log('🔵 Novo usuário criado via Google:', usuario.email);
+    } else {
+      // Atualizar dados se necessário
+      if (!usuario.google_id) {
+        usuario.google_id = payload.sub;
+        usuario.googleId = payload.sub;
+        usuario.verificado = true;
+        await usuario.save();
+      }
+      console.log('🔵 Usuário existente logado via Google:', usuario.email);
+    }
+    
+    // Gerar JWT token
+    const jwtToken = jwt.sign(
+      {
+        id: usuario._id,
+        userId: usuario._id,
+        username: usuario.username,
+        email: usuario.email
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    res.json({
+      success: true,
+      message: 'Login Google realizado com sucesso',
+      token: jwtToken,
+      usuario: {
+        id: usuario._id,
+        nome_completo: usuario.nome_completo,
+        username: usuario.username,
+        email: usuario.email,
+        avatar_url: usuario.avatar_url || usuario.foto
+      }
+    });
+    
   } catch (error) {
-    console.error('Erro no callback do Google:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Erro interno do servidor' 
+    console.error('❌ Erro no Google OAuth:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno no servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Erro de autenticação'
     });
   }
 };

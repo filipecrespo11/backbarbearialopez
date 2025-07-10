@@ -10,19 +10,28 @@ console.log("=====================================");
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session'); 
+const MongoStore = require('connect-mongo');
 const passport = require('passport'); 
 const GoogleStrategy = require('passport-google-oauth20').Strategy; 
 const autecontrol = require('./controllers/autecontrol');
 const auterota = require('./rotas/auterota');
 const bd = require('./config/bd');
 const Usuario = require('./models/usuarios');
+const { compressionMiddleware, memoryCleanup, memoryMonitor } = require('./middlewares/memory');
 const app = express();
 
-// Configuração da sessão
+// Configuração da sessão com MongoDB Store
 const sessionConfig = {
-  secret: process.env.JWT_SECRET,
+  secret: process.env.JWT_SECRET || 'fallback-secret-key',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    touchAfter: 24 * 3600, // lazy session update
+    ttl: 14 * 24 * 60 * 60, // = 14 days. Default session expiration
+    autoRemove: 'interval',
+    autoRemoveInterval: 10 // minutes
+  }),
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only em produção
     maxAge: 24 * 60 * 60 * 1000 // 24 horas
@@ -82,7 +91,10 @@ bd();
 //rota para autenticação de usuários
 app.use('/auterota', auterota);
 
-
+// Middlewares de otimização de memória
+app.use(compressionMiddleware);
+app.use(memoryCleanup);
+app.use(memoryMonitor);
      
 
 const PORT = process.env.PORT || 3001; // Porta padrão ou porta definida no ambiente

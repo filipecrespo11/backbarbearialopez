@@ -51,7 +51,9 @@ rotas.post('/agendar', authenticateToken, agendaController.criarAgendamento);
 // Rota para obter configurações do Google OAuth
 rotas.get('/google-config', (req, res) => {
   res.json({
-    clientId: process.env.GOOGLE_CLIENT_ID
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    // Não incluir client_secret por segurança
+    // O frontend deve enviar o redirect_uri no callback
   });
 });
 
