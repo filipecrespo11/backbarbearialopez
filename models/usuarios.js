@@ -11,6 +11,7 @@ const usuariosSchema = new mongoose.Schema({
   foto: { type: String, sparse: true },
   avatar_url: { type: String, sparse: true }, // para URL do avatar do Google
   verificado: { type: Boolean, default: false }, // campo para verificação de email
+  isAdmin: { type: Boolean, default: false }, // campo para admin
 });
 
 module.exports = mongoose.model("usuarios", usuariosSchema);

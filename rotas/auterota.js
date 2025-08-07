@@ -1,6 +1,7 @@
 const express = require('express');
 const usuarios = require('../models/usuarios');
 const { authenticateToken } = require('../middlewares/autenmid');
+const { autenticaAdmin } = require('../middlewares/admin');
 
 const rotas = express.Router();
 
@@ -65,6 +66,26 @@ rotas.get('/google-config', (req, res) => {
     // Não incluir client_secret por segurança
     // O frontend deve enviar o redirect_uri no callback
   });
+});
+
+// Rota protegida para criar admin
+rotas.post('/criar-admin', autenticaAdmin, async (req, res) => {
+  try {
+    const { nome_completo, username, password, tel, email } = req.body;
+    // Cria usuário admin
+    const novoAdmin = new usuarios({
+      nome_completo,
+      username,
+      password,
+      tel,
+      email,
+      isAdmin: true // Marca como admin
+    });
+    await novoAdmin.save();
+    res.status(201).json({ message: 'Administrador criado com sucesso' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao criar administrador', error });
+  }
 });
 
 module.exports = rotas;
