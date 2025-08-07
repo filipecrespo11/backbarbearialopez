@@ -48,6 +48,16 @@ const agendaController = require('../controllers/agendaController');
 // Rota para criar agendamento (usuário precisa estar autenticado)
 rotas.post('/agendar', authenticateToken, agendaController.criarAgendamento);
 
+// Rota para listar todos os agendamentos
+rotas.get('/agendamentos', async (req, res) => {
+  try {
+    const agendamentos = await require('../models/agenda').find({}, { data: 1, horario: 1, servico: 1, nome: 1, telefone: 1, usuarioId: 1 });
+    res.status(200).json(agendamentos);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao consultar agendamentos', error });
+  }
+});
+
 // Rota para obter configurações do Google OAuth
 rotas.get('/google-config', (req, res) => {
   res.json({
