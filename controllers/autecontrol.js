@@ -36,7 +36,9 @@ const login = async (req, res) => {
       email: usuario.email,
       tel: usuario.tel,
       foto: usuario.foto,
+      isAdmin: usuario.isAdmin,
       verificado: usuario.verificado
+
     };
     
     res.status(200).json({ 
