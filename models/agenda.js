@@ -9,7 +9,7 @@ const agendaSchema = new mongoose.Schema({
   servico: { 
     type: String, 
     required: true, 
-    enum: ['cabelo', 'barba', 'cabelo e barba'] // Adicione os tipos de serviço permitidos
+    enum: ['cabelo', 'barba', 'corte', 'cabelo e barba'] // Adicionado 'corte'
   }
 });
 

@@ -34,6 +34,10 @@ async function criarAgendamento(req, res) {
       // Erro de índice único: já existe agendamento nesse horário
       return res.status(409).json({ error: 'Já existe um agendamento para este horário.' });
     }
+    if (err.name === 'ValidationError') {
+      // Erro de validação do Mongoose
+      return res.status(400).json({ error: err.message });
+    }
     res.status(500).json({ error: 'Erro ao criar agendamento.' });
   }
 }
