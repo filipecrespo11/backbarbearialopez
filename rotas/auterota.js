@@ -82,7 +82,17 @@ rotas.post('/criar-admin', autenticaAdmin, async (req, res) => {
       isAdmin: true // Marca como admin
     });
     await novoAdmin.save();
-    res.status(201).json({ message: 'Administrador criado com sucesso' });
+    res.status(201).json({ 
+      message: 'Administrador criado com sucesso',
+      admin: {
+        id: novoAdmin._id,
+        nome_completo: novoAdmin.nome_completo,
+        username: novoAdmin.username,
+        email: novoAdmin.email,
+        tel: novoAdmin.tel,
+        isAdmin: novoAdmin.isAdmin // Inclui isAdmin na resposta
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao criar administrador', error });
   }
