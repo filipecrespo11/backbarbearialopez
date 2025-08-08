@@ -11,7 +11,7 @@ function autenticaAdmin(req, res, next) {
   }
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (!payload || !payload.isAdmin) {
+    if (!payload || payload.isAdmin !== true) {
       return res.status(403).json({ success: false, message: 'Acesso restrito a administradores.' });
     }
     req.usuario = payload;

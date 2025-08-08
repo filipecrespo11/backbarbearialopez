@@ -19,15 +19,15 @@ const login = async (req, res) => {
     if (!senhaCorreta) {
       return res.status(401).json({ message: "Usuário ou senha inválidos" });
     }
-      const token = jwt.sign({ 
+    const token = jwt.sign({ 
       id: usuario._id,
       userId: usuario._id, // compatibilidade 
       username: usuario.username,
-      email: usuario.email 
+      email: usuario.email,
+      isAdmin: usuario.isAdmin === true // garante boolean
     }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
-    
     // Retorna token e dados do usuário (sem a senha)
     const usuarioSemSenha = {
       id: usuario._id,
@@ -36,11 +36,9 @@ const login = async (req, res) => {
       email: usuario.email,
       tel: usuario.tel,
       foto: usuario.foto,
-      isAdmin: usuario.isAdmin,
-      verificado: usuario.verificado
-
+      verificado: usuario.verificado,
+      isAdmin: usuario.isAdmin === true // garante boolean
     };
-    
     res.status(200).json({ 
       token, 
       usuario: usuarioSemSenha 
@@ -51,4 +49,4 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = {  login};  
+module.exports = {  login};
