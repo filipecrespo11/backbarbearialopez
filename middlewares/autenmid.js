@@ -27,6 +27,7 @@ const authenticateToken = (req, res, next) => {
     // Verificar e decodificar o token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+    req.isAdmin = decoded.isAdmin === true; // Adiciona flag explícita
     next();
   } catch (error) {
     console.error('Erro na verificação do token:', error);
