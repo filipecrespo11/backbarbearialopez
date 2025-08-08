@@ -52,10 +52,18 @@ rotas.post('/agendar', authenticateToken, agendaController.criarAgendamento);
 // Rota para listar todos os agendamentos
 rotas.get('/agendamentos', async (req, res) => {
   try {
-    const agendamentos = await require('../models/agenda').find({}, { data: 1, horario: 1, servico: 1, nome: 1, telefone: 1, usuarioId: 1 });
-    res.status(200).json(agendamentos);
+    const agendamentos = await require('../models/agenda').find({}, { nome: 1, telefone: 1, servico: 1, data: 1, horario: 1, _id: 0 });
+    // Formata data para YYYY-MM-DD
+    const agendamentosFormatados = agendamentos.map(a => ({
+      nome: a.nome,
+      telefone: a.telefone,
+      servico: a.servico,
+      data: a.data instanceof Date ? a.data.toISOString().slice(0, 10) : a.data,
+      horario: a.horario
+    }));
+    res.status(200).json({ success: true, data: agendamentosFormatados });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao consultar agendamentos', error });
+    res.status(500).json({ success: false, message: 'Erro ao consultar agendamentos', error });
   }
 });
 
