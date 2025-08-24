@@ -28,7 +28,20 @@ async function criarAgendamento(req, res) {
       servico,
       usuarioId: usuarioCompleto._id
     });
-    res.status(201).json({ message: 'Agendamento criado com sucesso!', agendamento: novoAgendamento });
+    // Resposta compatível com o front: inclui success e id/_id
+    res.status(201).json({ 
+      success: true,
+      message: 'Agendamento criado com sucesso!', 
+      agendamento: {
+        id: novoAgendamento._id,
+        _id: novoAgendamento._id,
+        nome: novoAgendamento.nome,
+        telefone: novoAgendamento.telefone,
+        servico: novoAgendamento.servico,
+        data: novoAgendamento.data instanceof Date ? novoAgendamento.data.toISOString().slice(0,10) : novoAgendamento.data,
+        horario: novoAgendamento.horario
+      }
+    });
   } catch (err) {
     if (err.code === 11000) {
       // Erro de índice único: já existe agendamento nesse horário

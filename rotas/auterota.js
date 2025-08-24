@@ -49,12 +49,86 @@ const agendaController = require('../controllers/agendaController');
 // Rota para criar agendamento (usuário precisa estar autenticado)
 rotas.post('/agendar', authenticateToken, agendaController.criarAgendamento);
 
-// Rota para listar todos os agendamentos
+// Fallback: atualizar agendamento sem :id usando combinação única (data+horario+telefone)
+rotas.put('/agendar', authenticateToken, async (req, res) => {
+  try {
+    const { nome, telefone, servico, data, horario } = req.body;
+    if (!telefone || !data || !horario) {
+      return res.status(400).json({ success: false, message: 'Telefone, data e horário são obrigatórios.' });
+    }
+    const Agenda = require('../models/agenda');
+    const query = { telefone, horario, data: new Date(data) };
+    const agendamento = await Agenda.findOne(query);
+    if (!agendamento) return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+
+    // Permissões: admin ou dono do agendamento
+    const userId = (req.user && (req.user.id || req.user.userId)) || null;
+    const isOwner = userId && agendamento.usuarioId && agendamento.usuarioId.toString() === String(userId);
+    if (!req.isAdmin && !isOwner) {
+      return res.status(403).json({ success: false, message: 'Permissão negada' });
+    }
+
+    if (nome !== undefined) agendamento.nome = nome;
+    if (telefone !== undefined) agendamento.telefone = telefone;
+    if (servico !== undefined) agendamento.servico = servico;
+    if (data !== undefined) agendamento.data = new Date(data);
+    if (horario !== undefined) agendamento.horario = horario;
+
+    await agendamento.save();
+    res.status(200).json({
+      success: true,
+      agendamento: {
+        id: agendamento._id,
+        _id: agendamento._id,
+        nome: agendamento.nome,
+        telefone: agendamento.telefone,
+        servico: agendamento.servico,
+        data: agendamento.data instanceof Date ? agendamento.data.toISOString().slice(0,10) : agendamento.data,
+        horario: agendamento.horario
+      }
+    });
+  } catch (error) {
+    if (error && error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Conflito: já existe um agendamento nesse horário' });
+    }
+    res.status(500).json({ success: false, message: 'Erro ao atualizar agendamento', error });
+  }
+});
+
+// Fallback: deletar agendamento sem :id usando combinação única (data+horario+telefone)
+rotas.delete('/agendar', authenticateToken, async (req, res) => {
+  try {
+    const { telefone, data, horario } = req.body || {};
+    if (!telefone || !data || !horario) {
+      return res.status(400).json({ success: false, message: 'Telefone, data e horário são obrigatórios.' });
+    }
+    const Agenda = require('../models/agenda');
+    const query = { telefone, horario, data: new Date(data) };
+    const agendamento = await Agenda.findOne(query);
+    if (!agendamento) return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+
+    // Permissões: admin ou dono do agendamento
+    const userId = (req.user && (req.user.id || req.user.userId)) || null;
+    const isOwner = userId && agendamento.usuarioId && agendamento.usuarioId.toString() === String(userId);
+    if (!req.isAdmin && !isOwner) {
+      return res.status(403).json({ success: false, message: 'Permissão negada' });
+    }
+
+    await agendamento.deleteOne();
+    res.status(200).json({ success: true, message: 'Agendamento excluído' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erro ao deletar agendamento', error });
+  }
+});
+
+// Rota para listar todos os agendamentos (inclui id/_id)
 rotas.get('/agendamentos', async (req, res) => {
   try {
-    const agendamentos = await require('../models/agenda').find({}, { nome: 1, telefone: 1, servico: 1, data: 1, horario: 1, _id: 0 });
+    const agendamentos = await require('../models/agenda').find({}, { nome: 1, telefone: 1, servico: 1, data: 1, horario: 1 });
     // Formata data para YYYY-MM-DD
     const agendamentosFormatados = agendamentos.map(a => ({
+      id: a._id,
+      _id: a._id,
       nome: a.nome,
       telefone: a.telefone,
       servico: a.servico,
@@ -67,16 +141,68 @@ rotas.get('/agendamentos', async (req, res) => {
   }
 });
 
-// Rota para deletar agendamento por ID
-rotas.delete('/agendamentos/:id', authenticateToken, async (req, res) => {
+// Rota para atualizar agendamento por ID
+rotas.put('/agendar/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nome, telefone, servico, data, horario } = req.body;
+    const Agenda = require('../models/agenda');
+
+    const agendamento = await Agenda.findById(id);
+    if (!agendamento) return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+
+    // Permissões: admin ou dono do agendamento
+    const userId = (req.user && (req.user.id || req.user.userId)) || null;
+    const isOwner = userId && agendamento.usuarioId && agendamento.usuarioId.toString() === String(userId);
+    if (!req.isAdmin && !isOwner) {
+      return res.status(403).json({ success: false, message: 'Permissão negada' });
+    }
+
+    if (nome !== undefined) agendamento.nome = nome;
+    if (telefone !== undefined) agendamento.telefone = telefone;
+    if (servico !== undefined) agendamento.servico = servico;
+    if (data !== undefined) agendamento.data = new Date(data);
+    if (horario !== undefined) agendamento.horario = horario;
+
+    await agendamento.save();
+
+    const resposta = {
+      id: agendamento._id,
+      _id: agendamento._id,
+      nome: agendamento.nome,
+      telefone: agendamento.telefone,
+      servico: agendamento.servico,
+      data: agendamento.data instanceof Date ? agendamento.data.toISOString().slice(0,10) : agendamento.data,
+      horario: agendamento.horario
+    };
+
+    res.status(200).json({ success: true, agendamento: resposta });
+  } catch (error) {
+    if (error && error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Conflito: já existe um agendamento nesse horário' });
+    }
+    res.status(500).json({ success: false, message: 'Erro ao atualizar agendamento', error });
+  }
+});
+
+// Rota para deletar agendamento por ID (no padrão requisitado)
+rotas.delete('/agendar/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const Agenda = require('../models/agenda');
-    const agendamento = await Agenda.findByIdAndDelete(id);
-    if (!agendamento) {
-      return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+
+    const agendamento = await Agenda.findById(id);
+    if (!agendamento) return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+
+    // Permissões: admin ou dono do agendamento
+    const userId = (req.user && (req.user.id || req.user.userId)) || null;
+    const isOwner = userId && agendamento.usuarioId && agendamento.usuarioId.toString() === String(userId);
+    if (!req.isAdmin && !isOwner) {
+      return res.status(403).json({ success: false, message: 'Permissão negada' });
     }
-    res.status(200).json({ success: true, message: 'Agendamento deletado com sucesso' });
+
+    await agendamento.deleteOne();
+    res.status(200).json({ success: true, message: 'Agendamento excluído' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Erro ao deletar agendamento', error });
   }
