@@ -67,6 +67,21 @@ rotas.get('/agendamentos', async (req, res) => {
   }
 });
 
+// Rota para deletar agendamento por ID
+rotas.delete('/agendamentos/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const Agenda = require('../models/agenda');
+    const agendamento = await Agenda.findByIdAndDelete(id);
+    if (!agendamento) {
+      return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+    }
+    res.status(200).json({ success: true, message: 'Agendamento deletado com sucesso' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erro ao deletar agendamento', error });
+  }
+});
+
 // Rota para obter configurações do Google OAuth
 rotas.get('/google-config', (req, res) => {
   res.json({
