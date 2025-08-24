@@ -7,7 +7,7 @@ async function criarAgendamento(req, res) {
   const usuario = req.user;
   if (!usuario) return res.status(401).json({ error: 'Usuário não autenticado.' });
 
-  const { data, horario, servico } = req.body;
+  const { data, horario, servico, nome: nomeInput, telefone: telefoneInput, tel: telInput } = req.body;
   if (!data || !horario || !servico) {
     return res.status(400).json({ error: 'Dados obrigatórios faltando.' });
   }
@@ -19,11 +19,24 @@ async function criarAgendamento(req, res) {
       return res.status(401).json({ error: 'Usuário não encontrado.' });
     }
 
+    // Usar nome/telefone enviados no body quando fornecidos; fallback para dados do usuário logado
+    const nomeFinal = (typeof nomeInput === 'string' && nomeInput.trim()) ? nomeInput.trim() : usuarioCompleto.nome_completo;
+    const telefoneFinalOrig = (typeof telefoneInput === 'string' && telefoneInput.trim())
+      ? telefoneInput.trim()
+      : (typeof telInput === 'string' && telInput.trim()) ? telInput.trim() : usuarioCompleto.tel;
+
+    if (!telefoneFinalOrig) {
+      return res.status(400).json({ error: 'Telefone é obrigatório.' });
+    }
+
+    // Normalização simples de telefone: remover espaços
+    const telefoneFinal = telefoneFinalOrig.replace(/\s+/g, '');
+
     // Tenta criar o agendamento
     const novoAgendamento = await Agenda.create({
-      nome: usuarioCompleto.nome_completo,
-      telefone: usuarioCompleto.tel,
-      data,
+      nome: nomeFinal,
+      telefone: telefoneFinal,
+      data: new Date(data),
       horario,
       servico,
       usuarioId: usuarioCompleto._id
