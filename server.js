@@ -88,8 +88,9 @@ app.use(express.json());
 // Conexão com o banco de dados MongoDB
 bd();
 
-//rota para autenticação de usuários
+// Rotas principais (compatível com dois prefixos: /auterota e /api)
 app.use('/auterota', auterota);
+app.use('/api', auterota);
 
 // Middlewares de otimização de memória
 app.use(compressionMiddleware);
