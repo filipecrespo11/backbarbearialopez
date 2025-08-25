@@ -7,7 +7,16 @@ async function criarAgendamento(req, res) {
   const usuario = req.user;
   if (!usuario) return res.status(401).json({ error: 'Usuário não autenticado.' });
 
-  const { data, horario, servico, nome: nomeInput, telefone: telefoneInput, tel: telInput } = req.body;
+  const { 
+    data, 
+    horario, 
+    servico, 
+    nome: nomeInput, 
+    name: nameInput,
+    telefone: telefoneInput, 
+    phone: phoneInput,
+    tel: telInput 
+  } = req.body;
   if (!data || !horario || !servico) {
     return res.status(400).json({ error: 'Dados obrigatórios faltando.' });
   }
@@ -20,17 +29,23 @@ async function criarAgendamento(req, res) {
     }
 
     // Usar nome/telefone enviados no body quando fornecidos; fallback para dados do usuário logado
-    const nomeFinal = (typeof nomeInput === 'string' && nomeInput.trim()) ? nomeInput.trim() : usuarioCompleto.nome_completo;
-    const telefoneFinalOrig = (typeof telefoneInput === 'string' && telefoneInput.trim())
+    const nomeEscolhido = (typeof nomeInput === 'string' && nomeInput.trim()) ? nomeInput.trim() : (typeof nameInput === 'string' && nameInput.trim()) ? nameInput.trim() : null;
+    const nomeFinal = nomeEscolhido || usuarioCompleto.nome_completo;
+    const telefoneEscolhido = (typeof telefoneInput === 'string' && telefoneInput.trim())
       ? telefoneInput.trim()
-      : (typeof telInput === 'string' && telInput.trim()) ? telInput.trim() : usuarioCompleto.tel;
+      : (typeof phoneInput === 'string' && phoneInput.trim())
+        ? phoneInput.trim()
+        : (typeof telInput === 'string' && telInput.trim())
+          ? telInput.trim()
+          : null;
+    const telefoneFinalOrig = telefoneEscolhido || usuarioCompleto.tel;
 
     if (!telefoneFinalOrig) {
       return res.status(400).json({ error: 'Telefone é obrigatório.' });
     }
 
-    // Normalização simples de telefone: remover espaços
-    const telefoneFinal = telefoneFinalOrig.replace(/\s+/g, '');
+  // Normalização de telefone: manter apenas dígitos
+  const telefoneFinal = String(telefoneFinalOrig).replace(/[^0-9]/g, '');
 
     // Tenta criar o agendamento
     const novoAgendamento = await Agenda.create({
