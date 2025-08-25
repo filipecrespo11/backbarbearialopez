@@ -11,16 +11,13 @@ const authenticateToken = (req, res, next) => {
   
   // Tentar pegar token do header Authorization (Bearer format)
   if (authHeader) {
-    const trimmed = authHeader.trim();
+    const trimmed = String(authHeader).trim();
     const lower = trimmed.toLowerCase();
     if (lower.startsWith('bearer ')) {
       token = trimmed.slice(7);
     } else if (lower.startsWith('token ')) {
       token = trimmed.slice(6);
-    } else {
-      // Aceita Authorization com o token puro (sem Bearer)
-      token = trimmed;
-    }
+    } // Caso não comece com prefixo conhecido, NÃO usa como token para evitar pegar valores inválidos
   } else if (xAccessToken) {
     // Fallback para x-access-token header
     token = xAccessToken;
@@ -33,10 +30,16 @@ const authenticateToken = (req, res, next) => {
     if (match) token = decodeURIComponent(match[1]);
   }
   
-  if (!token) {
+  // Validação básica do formato JWT (header.payload.signature)
+  const isProbablyJwt = (t) => typeof t === 'string' && /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(t.trim());
+
+  if (!token || !isProbablyJwt(token)) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Auth: token ausente ou malformado');
+    }
     return res.status(401).json({ 
       success: false,
-      message: 'Token de acesso requerido' 
+      message: 'Token de acesso requerido ou inválido' 
     });
   }
 
