@@ -272,5 +272,55 @@ const googleCallback = async (req, res) => {
     });
   }
 };
+const atualizarTelefone = async (req, res) => {
+  try {
+    const { telefone } = req.body;
+    const userId = req.user.id || req.user.userId; // Vem do middleware de autenticação
+    
+    if (!telefone) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Telefone é obrigatório' 
+      });
+    }
+    
+    // Atualizar usuário no banco
+    const usuarioAtualizado = await usuarios.findByIdAndUpdate(
+      userId,
+      { 
+        tel: telefone,
+        telefone: telefone // Compatibilidade
+      },
+      { new: true }
+    );
+    
+    if (!usuarioAtualizado) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Usuário não encontrado' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Telefone atualizado com sucesso',
+      usuario: {
+        id: usuarioAtualizado._id,
+        nome_completo: usuarioAtualizado.nome_completo,
+        username: usuarioAtualizado.username,
+        email: usuarioAtualizado.email,
+        tel: usuarioAtualizado.tel,
+        telefone: usuarioAtualizado.telefone
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erro ao atualizar telefone:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
 
-module.exports = { iniciarCadastro, verificarCodigo, googleCallback };
+module.exports = { iniciarCadastro, verificarCodigo, googleCallback, atualizarTelefone };
