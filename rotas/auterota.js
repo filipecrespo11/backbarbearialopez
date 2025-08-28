@@ -217,7 +217,7 @@ rotas.get('/google-config', (req, res) => {
   });
 });
 
-router.put('/atualizar-telefone', autenticaUsuario, atualizarTelefone);
+rotas.put('/atualizar-telefone', authenticateToken, cadastroController.atualizarTelefone);
 
 // Rota protegida para criar admin
 rotas.post('/criar-admin', autenticaAdmin, async (req, res) => {
