@@ -4,7 +4,11 @@ const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../utils/sendEmail'); // Importação correta
 const { OAuth2Client } = require('google-auth-library');
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
 
 // Função para gerar código de verificação
 const generateVerificationCode = () => {
